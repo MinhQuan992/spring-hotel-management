@@ -1,0 +1,14 @@
+org\example\service\RoomService.class
+org\example\exception\InternalServerError.class
+org\example\common\Status.class
+org\example\controller\RoomResource.class
+org\example\exception\Exception.class
+org\example\ManagementServiceDemo.class
+org\example\exception\NotFound.class
+org\example\service\RoomServiceImpl.class
+org\example\mapstruct\RoomDTO.class
+org\example\mapstruct\RoomMapper.class
+org\example\exception\BadRequest.class
+org\example\entity\Room.class
+org\example\mapstruct\RoomMapperImpl.class
+org\example\repository\RoomRepository.class
