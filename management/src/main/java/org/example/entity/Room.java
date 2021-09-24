@@ -2,13 +2,9 @@ package org.example.entity;
 
 import lombok.Data;
 import org.example.common.Status;
-import org.springframework.lang.NonNull;
-
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+
 
 @Entity
 @Data

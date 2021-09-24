@@ -1,18 +1,24 @@
 package org.example.service;
 
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.common.Status;
 import org.example.entity.Room;
 import org.example.exception.InternalServerError;
 import org.example.exception.NotFound;
+import org.example.mapstruct.RoomDTO;
 import org.example.mapstruct.RoomMapper;
 import org.example.repository.RoomRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -24,17 +30,38 @@ public class RoomServiceImpl implements RoomService{
     private final RoomRepository roomRepository;
     private final RoomMapper roomMapper;
     @Override
-    public List<Room> getRooms() {
+    public List<RoomDTO> getRooms() {
+
 
         log.info("getting all rooms");
         try {
-            return roomRepository.findAll();
+
+            List<Room> list = roomRepository.findAll();
+
+            return list.stream().map(roomMapper::roomToRoomDTO).collect(Collectors.toList());
+
         }
         catch (Exception ex)
         {
             throw new InternalServerError();
         }
 
+    }
+
+    @Override
+    public List<Room> getRooms(int pageNumber, int limit) {
+        log.info("getting all rooms following page number and limit");
+        try {
+            Page<Room> rooms = roomRepository.findAll(PageRequest.of(pageNumber,limit, Sort.by("roomNumber").ascending()));
+            System.out.println("total rooms at current page: " + rooms.getSize());
+            System.out.println("total rooms: " + rooms.getTotalElements());
+            System.out.println("total pages: " + rooms.getTotalPages());
+            return rooms.getContent();
+        }
+        catch (Exception ex)
+        {
+            throw new InternalServerError();
+        }
     }
 
     @Override
@@ -73,7 +100,6 @@ public class RoomServiceImpl implements RoomService{
         {
             throw new InternalServerError();
         }
-
     }
 
     @Override
@@ -98,5 +124,4 @@ public class RoomServiceImpl implements RoomService{
 
         throw new NotFound();
     }
-
 }
