@@ -1,12 +1,14 @@
 package org.example.service;
 
 import lombok.AllArgsConstructor;
+import org.example.exception.NotFoundException;
 import org.example.model.Booking;
 import org.example.repository.BookingRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -14,44 +16,30 @@ public class BookingService {
     private final BookingRepository bookingRepository;
 
     public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+        return bookingRepository.findAll(Sort.by("id"));
     }
 
-    public Booking getBookingById(Long id) {
-        return bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("This id does not exist"));
-    }
-
-    public Booking addNewBooking(Long roomId, String customerName) {
-        List<Long> bookedRooms = bookingRepository.findBookedRooms();
-        if (bookedRooms.contains(roomId)) {
-            throw new IllegalStateException("This room is being booked");
+    public Optional<Booking> getBookingById(Long id) {
+        try {
+            return bookingRepository.findById(id);
+        } catch (Exception e) {
+            throw new NotFoundException();
         }
-        LocalDate today = LocalDate.now();
-        Booking booking = new Booking(roomId, customerName, today, null, null);
+    }
+
+    public List<Long> getBookedRooms() {
+        return bookingRepository.findBookedRooms();
+    }
+
+    public Booking addNewBooking(Booking booking) {
         return bookingRepository.save(booking);
     }
 
-    public Booking updateCheckinDate(Long id, int year, int month, int day) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("This id does not exist"));
-        LocalDate checkinDate = LocalDate.of(year, month, day);
-        booking.setCheckinDate(checkinDate);
+    public Booking updateBooking(Booking booking) {
         return bookingRepository.save(booking);
     }
 
-    public Booking updateCheckoutDate(Long id, int year, int month, int day) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("This id does not exist"));
-        LocalDate checkoutDate = LocalDate.of(year, month, day);
-        booking.setCheckoutDate(checkoutDate);
-        return bookingRepository.save(booking);
-    }
-
-    public Booking deleteBookingById(Long id) {
-        Booking booking = bookingRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("This id does not exist"));
+    public void deleteBookingById(Long id) {
         bookingRepository.deleteById(id);
-        return booking;
     }
 }

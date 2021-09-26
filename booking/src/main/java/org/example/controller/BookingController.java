@@ -1,11 +1,19 @@
 package org.example.controller;
 
 import lombok.AllArgsConstructor;
+import org.example.exception.NotFoundException;
+import org.example.exception.RoomUnavailableException;
 import org.example.model.Booking;
 import org.example.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("api/v1/booking")
@@ -20,14 +28,24 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getBookingById(@PathVariable("id") Long id) {
-        return new ResponseEntity<>(bookingService.getBookingById(id), HttpStatus.OK);
+        Optional<Booking> booking = bookingService.getBookingById(id);
+        if (booking.isEmpty()) {
+            throw new NotFoundException();
+        }
+        return new ResponseEntity<>(booking.get(), HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<Booking> addNewBooking(
             @RequestParam("roomId") Long roomId,
             @RequestParam("customerName") String customerName) {
-        return new ResponseEntity<>(bookingService.addNewBooking(roomId, customerName), HttpStatus.CREATED);
+        List<Long> bookedRooms = bookingService.getBookedRooms();
+        if (bookedRooms.contains(roomId)) {
+            throw new RoomUnavailableException();
+        }
+        LocalDate today = LocalDate.now();
+        Booking booking = new Booking(roomId, customerName, today, null, null);
+        return new ResponseEntity<>(bookingService.addNewBooking(booking), HttpStatus.CREATED);
     }
 
     @PutMapping("/checkin/{id}")
@@ -36,7 +54,13 @@ public class BookingController {
             @RequestParam("year") int year,
             @RequestParam("month") int month,
             @RequestParam("day") int day) {
-        return new ResponseEntity<>(bookingService.updateCheckinDate(id, year, month, day), HttpStatus.OK);
+        Optional<Booking> booking = bookingService.getBookingById(id);
+        if (booking.isEmpty()) {
+            throw new NotFoundException();
+        }
+        LocalDate checkinDate = LocalDate.of(year, month, day);
+        booking.get().setCheckinDate(checkinDate);
+        return new ResponseEntity<>(bookingService.updateBooking(booking.get()), HttpStatus.OK);
     }
 
     @PutMapping("/checkout/{id}")
@@ -45,11 +69,24 @@ public class BookingController {
             @RequestParam("year") int year,
             @RequestParam("month") int month,
             @RequestParam("day") int day) {
-        return new ResponseEntity<>(bookingService.updateCheckoutDate(id, year, month, day), HttpStatus.OK);
+        Optional<Booking> booking = bookingService.getBookingById(id);
+        if (booking.isEmpty()) {
+            throw new NotFoundException();
+        }
+        LocalDate checkoutDate = LocalDate.of(year, month, day);
+        booking.get().setCheckoutDate(checkoutDate);
+        return new ResponseEntity<>(bookingService.updateBooking(booking.get()), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Booking> deleteBooking(@PathVariable("id") Long id) {
-        return new ResponseEntity<>(bookingService.deleteBookingById(id), HttpStatus.OK);
+    public ResponseEntity<Map<String, String>> deleteBooking(@PathVariable("id") Long id) {
+        Optional<Booking> booking = bookingService.getBookingById(id);
+        if (booking.isEmpty()) {
+            throw new NotFoundException();
+        }
+        bookingService.deleteBookingById(id);
+        Map<String, String> result = new HashMap<>();
+        result.put("Message: ", "Deleted Successfully");
+        return new ResponseEntity<>(result, HttpStatus.OK);
     }
 }
