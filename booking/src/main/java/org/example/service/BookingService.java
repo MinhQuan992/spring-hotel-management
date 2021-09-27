@@ -2,13 +2,13 @@ package org.example.service;
 
 import lombok.AllArgsConstructor;
 import org.example.exception.NotFoundException;
+import org.example.exception.RoomUnavailableException;
 import org.example.model.Booking;
 import org.example.repository.BookingRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @AllArgsConstructor
@@ -19,19 +19,23 @@ public class BookingService {
         return bookingRepository.findAll(Sort.by("id"));
     }
 
-    public Optional<Booking> getBookingById(Long id) {
-        try {
-            return bookingRepository.findById(id);
-        } catch (Exception e) {
+    public Booking getBookingById(Long id) {
+        Optional<Booking> booking = bookingRepository.findById(id);
+        if (booking.isEmpty()) {
             throw new NotFoundException();
         }
-    }
-
-    public List<Long> getBookedRooms() {
-        return bookingRepository.findBookedRooms();
+        return booking.get();
     }
 
     public Booking addNewBooking(Booking booking) {
+        List<Booking> bookings = bookingRepository.findBookingsByCheckoutDateIsNull();
+        List<Long> bookedRooms = new ArrayList<>();
+        bookings.forEach((bookingInList) -> {
+            bookedRooms.add(bookingInList.getRoomId());
+        });
+        if (bookedRooms.contains(booking.getRoomId())) {
+            throw new RoomUnavailableException();
+        }
         return bookingRepository.save(booking);
     }
 
@@ -39,7 +43,10 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
-    public void deleteBookingById(Long id) {
-        bookingRepository.deleteById(id);
+    public Map<String, String> deleteBooking(Booking booking) {
+        bookingRepository.delete(booking);
+        Map<String, String> result = new HashMap<>();
+        result.put("Message: ", "Deleted Successfully");
+        return result;
     }
 }
