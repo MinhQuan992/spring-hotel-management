@@ -28,21 +28,13 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getBookingById(@PathVariable("id") Long id) {
-        Optional<Booking> booking = bookingService.getBookingById(id);
-        if (booking.isEmpty()) {
-            throw new NotFoundException();
-        }
-        return new ResponseEntity<>(booking.get(), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getBookingById(id), HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/book")
     public ResponseEntity<Booking> addNewBooking(
             @RequestParam("roomId") Long roomId,
             @RequestParam("customerName") String customerName) {
-        List<Long> bookedRooms = bookingService.getBookedRooms();
-        if (bookedRooms.contains(roomId)) {
-            throw new RoomUnavailableException();
-        }
         LocalDate today = LocalDate.now();
         Booking booking = new Booking(roomId, customerName, today, null, null);
         return new ResponseEntity<>(bookingService.addNewBooking(booking), HttpStatus.CREATED);
@@ -54,13 +46,10 @@ public class BookingController {
             @RequestParam("year") int year,
             @RequestParam("month") int month,
             @RequestParam("day") int day) {
-        Optional<Booking> booking = bookingService.getBookingById(id);
-        if (booking.isEmpty()) {
-            throw new NotFoundException();
-        }
+        Booking booking = bookingService.getBookingById(id);
         LocalDate checkinDate = LocalDate.of(year, month, day);
-        booking.get().setCheckinDate(checkinDate);
-        return new ResponseEntity<>(bookingService.updateBooking(booking.get()), HttpStatus.OK);
+        booking.setCheckinDate(checkinDate);
+        return new ResponseEntity<>(bookingService.updateBooking(booking), HttpStatus.OK);
     }
 
     @PutMapping("/checkout/{id}")
@@ -69,24 +58,15 @@ public class BookingController {
             @RequestParam("year") int year,
             @RequestParam("month") int month,
             @RequestParam("day") int day) {
-        Optional<Booking> booking = bookingService.getBookingById(id);
-        if (booking.isEmpty()) {
-            throw new NotFoundException();
-        }
+        Booking booking = bookingService.getBookingById(id);
         LocalDate checkoutDate = LocalDate.of(year, month, day);
-        booking.get().setCheckoutDate(checkoutDate);
-        return new ResponseEntity<>(bookingService.updateBooking(booking.get()), HttpStatus.OK);
+        booking.setCheckoutDate(checkoutDate);
+        return new ResponseEntity<>(bookingService.updateBooking(booking), HttpStatus.OK);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, String>> deleteBooking(@PathVariable("id") Long id) {
-        Optional<Booking> booking = bookingService.getBookingById(id);
-        if (booking.isEmpty()) {
-            throw new NotFoundException();
-        }
-        bookingService.deleteBookingById(id);
-        Map<String, String> result = new HashMap<>();
-        result.put("Message: ", "Deleted Successfully");
-        return new ResponseEntity<>(result, HttpStatus.OK);
+        Booking booking = bookingService.getBookingById(id);
+        return new ResponseEntity<>(bookingService.deleteBooking(booking), HttpStatus.OK);
     }
 }
