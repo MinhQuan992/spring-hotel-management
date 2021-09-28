@@ -31,7 +31,7 @@ public class BookingController {
         return new ResponseEntity<>(bookingService.getBookingById(id), HttpStatus.OK);
     }
 
-    @PostMapping
+    @PostMapping("/book")
     public ResponseEntity<Booking> addNewBooking(
             @RequestParam("roomId") Long roomId,
             @RequestParam("customerName") String customerName) {
